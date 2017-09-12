@@ -21,12 +21,21 @@
 */
 
 import Foundation
+import JavaScriptCore
 
-class Movie: NSObject {
+@objc protocol MovieJSExports: JSExport {
+  var title: String { get set }
+  var price: String { get set }
+  var imageUrl: String { get set }
   
-  var title: String
-  var price: String
-  var imageUrl: String
+  static func movieWith(title: String, price: String, imageUrl: String) -> Movie
+}
+
+class Movie: NSObject, MovieJSExports {
+  
+  dynamic var title: String
+  dynamic var price: String
+  dynamic var imageUrl: String
   
   init(title: String, price: String, imageUrl: String) {
     self.title = title
@@ -34,19 +43,7 @@ class Movie: NSObject {
     self.imageUrl = imageUrl
   }
   
-  static let movieBuilder: @convention(block) ([[String : String]]) -> [Movie] = { object in
-    return object.map { dict in
-      
-      guard
-        let title = dict["title"],
-        let price = dict["price"],
-        let imageUrl = dict["imageUrl"] else {
-          print("unable to parse Movie objects.")
-          fatalError()
-      }
-      
-      return Movie(title: title, price: price, imageUrl: imageUrl)
-    }
+  class func movieWith(title: String, price: String, imageUrl: String) -> Movie {
+    return Movie(title: title, price: price, imageUrl: imageUrl)
   }
-  
 }

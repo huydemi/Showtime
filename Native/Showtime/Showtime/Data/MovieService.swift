@@ -28,19 +28,23 @@ let movieUrl = "https://itunes.apple.com/us/rss/topmovies/limit=50/json"
 class MovieService {
   
   lazy var context: JSContext? = {
+    
     let context = JSContext()
     
-    // First, you load the common.js file from the application bundle, which contains the JavaScript code you want to access.
     guard let
-      commonJSPath = Bundle.main.path(forResource: "common", ofType: "js") else {
+      commonJSPath = Bundle.main.path(forResource: "common", ofType: "js"),
+      let additionsJSPath = Bundle.main.path(forResource: "additions", ofType: "js") else {
         print("Unable to read resource files.")
         return nil
     }
     
-    // After loading the file, the context object will evaluate its contents by calling context.evaluateScript(), passing in the file contents for the parameter.
     do {
       let common = try String(contentsOfFile: commonJSPath, encoding: String.Encoding.utf8)
+      let additions = try String(contentsOfFile: additionsJSPath, encoding: String.Encoding.utf8)
+      
+      context?.setObject(Movie.self, forKeyedSubscript: "Movie" as (NSCopying & NSObjectProtocol)!)
       _ = context?.evaluateScript(common)
+      _ = context?.evaluateScript(additions)
     } catch (let error) {
       print("Error while processing script file: \(error)")
     }
@@ -66,36 +70,23 @@ class MovieService {
   }
   
   func parse(response: String, withLimit limit: Double) -> [Movie] {
-    // First, you make sure the context object is properly initialized. If there were any errors during the setup (e.g.: common.js was not in the bundle), there’s no point in resuming.
     guard let context = context else {
       print("JSContext not found.")
       return []
     }
     
-    // You ask the context object to provide the parseJSON() method. As mentioned previously, the result of the query will be wrapped in a JSValue object. Next, you invoke the method using call(withArguments:), where you specify the arguments in an array format. Finally, you convert the JavaScript value to an array.
     let parseFunction = context.objectForKeyedSubscript("parseJson")
     guard let parsed = parseFunction?.call(withArguments: [response]).toArray() else {
       print("Unable to parse JSON")
       return []
     }
     
-    // filterByLimit() returns the list of movies that fit the given price limit.
     let filterFunction = context.objectForKeyedSubscript("filterByLimit")
     let filtered = filterFunction?.call(withArguments: [parsed, limit]).toArray()
     
-    // So you’ve got the list of movies, but there’s still one missing piece: filtered holds a JSValue array, and you need to map them to the native Movie type.
-    
-    // You use Swift’s unsafeBitCast(_:to:) function to cast the block to AnyObject.
-    let builderBlock = unsafeBitCast(Movie.movieBuilder, to: AnyObject.self)
-    
-    // Calling setObject(_:forKeyedSubscript:) on the context lets you load the block into the JavaScript runtime. You then use evaluateScript() to get a reference to your block in JavaScript.
-    context.setObject(builderBlock, forKeyedSubscript: "movieBuilder" as (NSCopying & NSObjectProtocol)!)
-    let builder = context.evaluateScript("movieBuilder")
-    
-    // The final step is to call your block from JavaScript using call(withArguments:), passing in the array of JSValue objects as the argument. The return value can be cast to an array of Movie objects.
+    let mapFunction = context.objectForKeyedSubscript("mapToNative")
     guard let unwrappedFiltered = filtered,
-      let movies = builder?.call(withArguments: [unwrappedFiltered]).toArray() as? [Movie] else {
-        print("Error while processing movies.")
+      let movies = mapFunction?.call(withArguments: [unwrappedFiltered]).toArray() as? [Movie] else {
         return []
     }
     
