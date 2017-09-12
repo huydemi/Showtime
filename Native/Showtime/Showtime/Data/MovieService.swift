@@ -25,28 +25,28 @@ import JavaScriptCore
 
 let movieUrl = "https://itunes.apple.com/us/rss/topmovies/limit=50/json"
 
-lazy var context: JSContext? = {
-  let context = JSContext()
-  
-  // First, you load the common.js file from the application bundle, which contains the JavaScript code you want to access.
-  guard let
-    commonJSPath = Bundle.main.path(forResource: "common", ofType: "js") else {
-      print("Unable to read resource files.")
-      return nil
-  }
-  
-  // After loading the file, the context object will evaluate its contents by calling context.evaluateScript(), passing in the file contents for the parameter.
-  do {
-    let common = try String(contentsOfFile: commonJSPath, encoding: String.Encoding.utf8)
-    _ = context?.evaluateScript(common)
-  } catch (let error) {
-    print("Error while processing script file: \(error)")
-  }
-  
-  return context
-}()
-
 class MovieService {
+  
+  lazy var context: JSContext? = {
+    let context = JSContext()
+    
+    // First, you load the common.js file from the application bundle, which contains the JavaScript code you want to access.
+    guard let
+      commonJSPath = Bundle.main.path(forResource: "common", ofType: "js") else {
+        print("Unable to read resource files.")
+        return nil
+    }
+    
+    // After loading the file, the context object will evaluate its contents by calling context.evaluateScript(), passing in the file contents for the parameter.
+    do {
+      let common = try String(contentsOfFile: commonJSPath, encoding: String.Encoding.utf8)
+      _ = context?.evaluateScript(common)
+    } catch (let error) {
+      print("Error while processing script file: \(error)")
+    }
+    
+    return context
+  }()
   
   func loadMoviesWith(limit: Double, onComplete complete: @escaping ([Movie]) -> ()) {
     guard let url = URL(string: movieUrl) else {
@@ -84,7 +84,22 @@ class MovieService {
     let filtered = filterFunction?.call(withArguments: [parsed, limit]).toArray()
     
     // So you’ve got the list of movies, but there’s still one missing piece: filtered holds a JSValue array, and you need to map them to the native Movie type.
-    return []
+    
+    // You use Swift’s unsafeBitCast(_:to:) function to cast the block to AnyObject.
+    let builderBlock = unsafeBitCast(Movie.movieBuilder, to: AnyObject.self)
+    
+    // Calling setObject(_:forKeyedSubscript:) on the context lets you load the block into the JavaScript runtime. You then use evaluateScript() to get a reference to your block in JavaScript.
+    context.setObject(builderBlock, forKeyedSubscript: "movieBuilder" as (NSCopying & NSObjectProtocol)!)
+    let builder = context.evaluateScript("movieBuilder")
+    
+    // The final step is to call your block from JavaScript using call(withArguments:), passing in the array of JSValue objects as the argument. The return value can be cast to an array of Movie objects.
+    guard let unwrappedFiltered = filtered,
+      let movies = builder?.call(withArguments: [unwrappedFiltered]).toArray() as? [Movie] else {
+        print("Error while processing movies.")
+        return []
+    }
+    
+    return movies
   }
   
 }

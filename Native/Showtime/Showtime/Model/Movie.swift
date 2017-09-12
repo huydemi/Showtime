@@ -33,4 +33,20 @@ class Movie: NSObject {
     self.price = price
     self.imageUrl = imageUrl
   }
+  
+  static let movieBuilder: @convention(block) ([[String : String]]) -> [Movie] = { object in
+    return object.map { dict in
+      
+      guard
+        let title = dict["title"],
+        let price = dict["price"],
+        let imageUrl = dict["imageUrl"] else {
+          print("unable to parse Movie objects.")
+          fatalError()
+      }
+      
+      return Movie(title: title, price: price, imageUrl: imageUrl)
+    }
+  }
+  
 }
