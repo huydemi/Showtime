@@ -170,6 +170,7 @@
 				TargetAttributes = {
 					BBECD19B1C31D50F00D9823D = {
 						CreatedOnToolsVersion = 7.2;
+						DevelopmentTeam = 8KDJ9PT669;
 						LastSwiftMigration = 0800;
 					};
 				};
@@ -332,9 +333,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 8KDJ9PT669;
 				INFOPLIST_FILE = "Showtime/Bundle files/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.razeware.Showtime;
+				PRODUCT_BUNDLE_IDENTIFIER = huy.dang.quoc.Showtime;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;
 			};
@@ -344,9 +346,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 8KDJ9PT669;
 				INFOPLIST_FILE = "Showtime/Bundle files/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.razeware.Showtime;
+				PRODUCT_BUNDLE_IDENTIFIER = huy.dang.quoc.Showtime;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;
 			};
